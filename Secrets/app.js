@@ -1,3 +1,5 @@
+require('dotenv').config()
+
 const express = require("express");
 
 const ejs = require("ejs");
@@ -16,9 +18,9 @@ const userSchema = new mongoose.Schema({
     email: String,
     password: String
 })
-const secret = "mylittlesecret";
+
 userSchema.plugin(encrypt, {
-    secret: secret,
+    secret: process.env.SECRET,
     encryptedFields: ['password']
 })
 const user = mongoose.model('user', userSchema);
@@ -61,6 +63,7 @@ app.route("/login")
             if (!err) {
                 if (docs) {
                     if (docs.password === req.body.password){
+                        console.log("logged in")
                         res.render("secrets");
                         }
                     else {
