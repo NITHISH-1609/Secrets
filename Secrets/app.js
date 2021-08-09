@@ -6,7 +6,10 @@ const ejs = require("ejs");
 const bodyParser = require("body-parser");
 
 const mongoose = require("mongoose");
-const md5 = require("md5");
+const bcrypt = require("bcrypt");
+const saltRounds = 10;
+
+
 
 mongoose.connect('mongodb://localhost:27017/userDB', {
     useNewUrlParser: true,
@@ -62,14 +65,16 @@ app.route("/login")
         }, (err, docs) => {
             if (!err) {
                 if (docs) {
-                    if (docs.password === md5(req.body.password)){
-                        console.log("logged in")
-                        res.render("secrets");
+                    bcrypt.compare(req.body.password, docs.password, function (err, result) {
+                        if (result === true) {
+                            res.render("secrets")
+                            console.log("logged in");
+                        } else {
+                            console.log("wrong password");
+                            res.redirect("/");
                         }
-                    else {
-                        console.log("wrong password");
-                        res.redirect("/");
-                    }
+                    });
+
                 } else {
                     console.log("Not found!");
                     res.redirect("/");
@@ -91,14 +96,24 @@ app.route("/register")
     })
 
     .post((req, res) => {
-        const userx = new user({
-            email: req.body.username,
-            password: md5(req.body.password)
-        })
+        bcrypt.hash(req.body.password, saltRounds, function (err, hash) {
+            if (!err) {
+                const userx = new user({
+                    email: req.body.username,
+                    password: hash
+                })
+                userx.save();
+                console.log("registered sucessfully");
+                res.render("secrets");
 
-        userx.save();
-        console.log("registered sucessfully");
-        res.render("secrets");
+            } else
+                console.log(err);
+
+        });
+
+
+
+
     })
 
 
